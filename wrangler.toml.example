@@ -1,0 +1,57 @@
+# wrangler.toml.example — committed template, safe to read in source.
+#
+# `wrangler.toml` itself is gitignored. Each operator copies this template
+# to `wrangler.toml` (`cp wrangler.toml.example wrangler.toml`) and pastes
+# their own Cloudflare resource IDs into the REPLACE_WITH_* placeholders
+# below. See docs/deploy.md for the full ordered sequence.
+
+name = "gmail-multi-account-mcp"
+main = "src/index.ts"
+compatibility_date = "2024-12-30"
+compatibility_flags = ["nodejs_compat"]
+
+# Bundle JSON modules. The MCP SDK transitively pulls in `ajv`, which uses
+# `require('./refs/data.json')`. Without this rule, workerd refuses the
+# import under its CJS-via-ESM shim.
+[[rules]]
+type = "Data"
+globs = ["**/*.json"]
+fallthrough = true
+
+# Free-tier-friendly defaults. Bindings are filled in by the operator at deploy time.
+
+# D1 database binding (created via `wrangler d1 create gmail-mcp` then paste id here)
+[[d1_databases]]
+binding = "DB"
+database_name = "gmail-mcp"
+database_id = "REPLACE_WITH_D1_ID"
+migrations_dir = "migrations"
+
+# KV namespace used by @cloudflare/workers-oauth-provider to persist
+# clients, grants, access tokens, and refresh tokens. Binding name is fixed
+# by the library and MUST be `OAUTH_KV`.
+# (`wrangler kv namespace create OAUTH_KV` then paste id here.)
+[[kv_namespaces]]
+binding = "OAUTH_KV"
+id = "REPLACE_WITH_OAUTH_KV_ID"
+
+# NOTE: this server's MCP transport is hand-rolled Streamable HTTP (see
+# src/mcp/transport.ts). There is no Durable Object binding — the transport
+# is stateless. The `agents` package was previously used and removed because
+# it carried three independent upstream issues (ajv JSON requires,
+# server.connect double-call, partyserver pulling cloudflare:email at
+# module-load) that don't apply to this server's actual needs.
+
+# Secrets — set with `wrangler secret put NAME` (see docs/deploy.md):
+#   GOOGLE_CLIENT_ID
+#   GOOGLE_CLIENT_SECRET
+#   AES_MASTER_KEY        # 32-byte base64 (AES-256 key for at-rest refresh tokens)
+#   HMAC_PEPPER           # 32-byte base64 (pepper for team-key + operator-token hashes)
+#   OPERATOR_TOKEN_HMAC   # HMAC-SHA-256(HMAC_PEPPER, OPERATOR_TOKEN), hex-encoded
+#   PUBLIC_BASE_URL       # https://gmail-multi-account-mcp.<acct-subdomain>.workers.dev
+
+[vars]
+# Non-secret config can live here. Real values come from Secrets.
+
+[observability]
+enabled = true

@@ -1,0 +1,40 @@
+node_modules/
+.wrangler/
+.dev.vars
+.dev.vars.*
+*.local
+.env
+.env.*
+
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Deploy / wrangler logs. `WRANGLER_LOG=debug npx wrangler deploy
+# 2>&1 | tee deploy.log` is the documented non-interactive deploy
+# form (see docs/deploy.md). The log carries account and binding IDs
+# — not dangerously secret, but not for the repo either.
+*.log
+
+# Operator-side secrets (never commit)
+credentials.json
+*.key
+.gmail-mcp-admin.env
+
+# Operator-local wrangler config. The committed template is
+# wrangler.toml.example; each operator copies it to wrangler.toml and
+# pastes their own Cloudflare resource IDs. See docs/deploy.md.
+wrangler.toml
+
+# Reference clones live outside the repo, but block accidental drops too
+_scratch/
+gmail-mcp-scratch/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
